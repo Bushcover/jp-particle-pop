@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#FAF6F0">
+<title>🎯 Particle Pop</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23FDA4AF'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle'%3E%F0%9F%8E%AF%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23FDA4AF'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle'%3E%F0%9F%8E%AF%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&family=Plus+Jakarta+Sans:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Plus Jakarta Sans', sans-serif; }
+  .font-jp { font-family: 'M PLUS Rounded 1c', sans-serif; }
+
+  @keyframes floatA {
+    0%, 100% { transform: translateY(0) rotate(-4deg); }
+    50% { transform: translateY(-18px) rotate(5deg); }
+  }
+  @keyframes floatB {
+    0%, 100% { transform: translateY(0) rotate(3deg); }
+    50% { transform: translateY(-24px) rotate(-4deg); }
+  }
+  .animate-float-a { animation: floatA 7s ease-in-out infinite; }
+  .animate-float-b { animation: floatB 9s ease-in-out infinite; }
+
+  @keyframes shakeCard {
+    10%, 90% { transform: translateX(-2px); }
+    20%, 80% { transform: translateX(4px); }
+    30%, 50%, 70% { transform: translateX(-9px); }
+    40%, 60% { transform: translateX(9px); }
+  }
+  .animate-shake { animation: shakeCard 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(.92) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .animate-pop-in { animation: popIn 0.35s ease-out; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-float-a, .animate-float-b, .animate-shake, .animate-pop-in {
+      animation: none !important;
+    }
+  }
+
+  #timerBarInner { width: 100%; }
+</style>
+</head>
+<body class="bg-[#FAF6F0] text-stone-700">
+
+  <div class="relative min-h-screen w-full overflow-x-hidden">
+
+    <!-- decorative floating background badges (shared ambient layer behind every screen) -->
+    <span class="absolute z-0 select-none pointer-events-none text-4xl opacity-30 top-[8%] left-[6%] animate-float-a">🌸</span>
+    <span class="absolute z-0 select-none pointer-events-none text-3xl opacity-25 top-[16%] right-[9%] animate-float-b">✨</span>
+    <span class="absolute z-0 select-none pointer-events-none text-4xl opacity-20 bottom-[14%] left-[10%] animate-float-b">🍙</span>
+    <span class="absolute z-0 select-none pointer-events-none text-3xl opacity-25 bottom-[18%] right-[7%] animate-float-a">🌸</span>
+    <span class="absolute z-0 select-none pointer-events-none text-2xl opacity-20 top-[46%] left-[3%] animate-float-a">✨</span>
+    <span class="absolute z-0 select-none pointer-events-none text-2xl opacity-20 top-[58%] right-[4%] animate-float-b">🍙</span>
+
+    <!-- ============================================================ -->
+    <!-- STATE 1: HOME                                                 -->
+    <!-- ============================================================ -->
+    <div id="screenHome" class="relative z-10 min-h-screen w-full flex flex-col items-center justify-center px-4 py-10">
+      <div class="flex flex-col items-center gap-8 text-center">
+        <div>
+          <h1 class="font-jp text-4xl sm:text-5xl font-extrabold text-rose-500">Particle Pop 🎯</h1>
+          <p class="text-stone-400 text-sm sm:text-base font-semibold mt-2">Master Japanese particles, one pop at a time.</p>
+          <div id="bestStreakBadge" class="font-jp inline-block bg-amber-100 border border-amber-200 text-amber-600 font-bold rounded-full px-5 py-2 shadow-sm text-sm sm:text-base mt-4">🏆 Best Streak: 0</div>
+        </div>
+        <div class="flex flex-col gap-4 w-full max-w-xs">
+          <button id="startTrainingBtn" type="button" class="w-full font-jp bg-white/40 backdrop-blur-md border border-white/60 rounded-2xl border-b-4 border-b-rose-300 shadow-[0_10px_30px_rgba(217,119,6,0.10)] px-6 py-5 text-xl font-bold text-rose-600 transition-all duration-150 hover:bg-white/60 hover:-translate-y-0.5 active:border-b-0 active:translate-y-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200">Start Training</button>
+          <button id="customFiltersBtn" type="button" class="w-full font-jp bg-white/40 backdrop-blur-md border border-white/60 rounded-2xl border-b-4 border-b-emerald-300 shadow-[0_10px_30px_rgba(217,119,6,0.10)] px-6 py-5 text-xl font-bold text-emerald-600 transition-all duration-150 hover:bg-white/60 hover:-translate-y-0.5 active:border-b-0 active:translate-y-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200">Custom Filters</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- STATE 2: CUSTOM FILTERS                                       -->
+    <!-- ============================================================ -->
+    <div id="screenFilters" class="hidden relative z-10 min-h-screen w-full flex flex-col items-center justify-center px-4 py-10">
+      <div class="w-full max-w-xl bg-white/90 backdrop-blur-md rounded-3xl border-2 border-orange-100/60 shadow-[0_10px_30px_rgba(217,119,6,0.06)] p-6 sm:p-10 flex flex-col gap-6">
+        <div class="text-center">
+          <h2 class="font-jp text-2xl sm:text-3xl font-extrabold text-rose-500">Custom Filters 🌸</h2>
+          <p class="text-stone-400 text-sm font-semibold mt-1">Pick your focus — leave blank to practice everything.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button type="button" data-group="basics" class="filter-toggle group-toggle w-full flex items-center gap-3 bg-white/70 border-2 border-orange-100/60 rounded-2xl px-5 py-4 text-left transition-all duration-150 hover:bg-rose-50/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200" aria-pressed="false">
+            <span class="filter-box shrink-0 w-6 h-6 rounded-md border-2 border-rose-300 flex items-center justify-center text-white text-sm font-bold transition-colors duration-150"></span>
+            <span class="flex flex-col">
+              <span class="font-jp font-bold text-stone-600">The Basics</span>
+              <span class="text-xs font-semibold text-stone-400">は · が · を — Subject / Object</span>
+            </span>
+          </button>
+          <button type="button" data-group="location" class="filter-toggle group-toggle w-full flex items-center gap-3 bg-white/70 border-2 border-orange-100/60 rounded-2xl px-5 py-4 text-left transition-all duration-150 hover:bg-rose-50/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200" aria-pressed="false">
+            <span class="filter-box shrink-0 w-6 h-6 rounded-md border-2 border-rose-300 flex items-center justify-center text-white text-sm font-bold transition-colors duration-150"></span>
+            <span class="flex flex-col">
+              <span class="font-jp font-bold text-stone-600">Location &amp; Tool</span>
+              <span class="text-xs font-semibold text-stone-400">に · で · へ — Where / How</span>
+            </span>
+          </button>
+          <button type="button" data-group="connection" class="filter-toggle group-toggle w-full flex items-center gap-3 bg-white/70 border-2 border-orange-100/60 rounded-2xl px-5 py-4 text-left transition-all duration-150 hover:bg-rose-50/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200" aria-pressed="false">
+            <span class="filter-box shrink-0 w-6 h-6 rounded-md border-2 border-rose-300 flex items-center justify-center text-white text-sm font-bold transition-colors duration-150"></span>
+            <span class="flex flex-col">
+              <span class="font-jp font-bold text-stone-600">Connection</span>
+              <span class="text-xs font-semibold text-stone-400">と · や · も — And / Also</span>
+            </span>
+          </button>
+          <button type="button" data-group="range" class="filter-toggle group-toggle w-full flex items-center gap-3 bg-white/70 border-2 border-orange-100/60 rounded-2xl px-5 py-4 text-left transition-all duration-150 hover:bg-rose-50/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200" aria-pressed="false">
+            <span class="filter-box shrink-0 w-6 h-6 rounded-md border-2 border-rose-300 flex items-center justify-center text-white text-sm font-bold transition-colors duration-150"></span>
+            <span class="flex flex-col">
+              <span class="font-jp font-bold text-stone-600">Range</span>
+              <span class="text-xs font-semibold text-stone-400">から · まで — From / To</span>
+            </span>
+          </button>
+        </div>
+
+        <button id="allParticlesToggle" type="button" data-group="all" class="filter-toggle w-full flex items-center gap-3 bg-white/70 border-2 border-orange-100/60 rounded-2xl px-5 py-4 text-left transition-all duration-150 hover:bg-rose-50/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200" aria-pressed="false">
+          <span class="filter-box shrink-0 w-6 h-6 rounded-md border-2 border-rose-300 flex items-center justify-center text-white text-sm font-bold transition-colors duration-150"></span>
+          <span class="flex flex-col">
+            <span class="font-jp font-bold text-stone-600">✨ All Particles</span>
+            <span class="text-xs font-semibold text-stone-400">Practice everything — overrides the filters above</span>
+          </span>
+        </button>
+
+        <div class="flex flex-col gap-3">
+          <p class="font-jp font-bold text-stone-400 text-xs uppercase tracking-widest text-center">Display Mode</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button type="button" data-mode="support" class="mode-toggle w-full flex items-center gap-3 bg-white/70 border-2 border-orange-100/60 rounded-2xl px-4 py-4 text-left transition-all duration-150 hover:bg-rose-50/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200" aria-pressed="false">
+              <span class="mode-dot shrink-0 w-5 h-5 rounded-full border-2 border-rose-300 transition-colors duration-150"></span>
+              <span class="flex flex-col">
+                <span class="font-jp font-bold text-stone-600">Full Support</span>
+                <span class="text-xs font-semibold text-stone-400">Romaji &amp; English Hints</span>
+              </span>
+            </button>
+            <button type="button" data-mode="hardcore" class="mode-toggle w-full flex items-center gap-3 bg-white/70 border-2 border-orange-100/60 rounded-2xl px-4 py-4 text-left transition-all duration-150 hover:bg-rose-50/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200" aria-pressed="false">
+              <span class="mode-dot shrink-0 w-5 h-5 rounded-full border-2 border-rose-300 transition-colors duration-150"></span>
+              <span class="flex flex-col">
+                <span class="font-jp font-bold text-stone-600">Hardcore</span>
+                <span class="text-xs font-semibold text-stone-400">Japanese Only</span>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <button id="lockInBtn" type="button" class="w-full font-jp bg-rose-200 hover:bg-rose-300 rounded-2xl border-b-4 border-rose-400 active:border-b-0 active:translate-y-1 transition-all duration-150 text-white font-bold text-lg py-4 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-300">Lock In &amp; Play 🔒</button>
+
+        <button id="filtersBackBtn" type="button" class="text-stone-400 text-sm font-semibold hover:text-stone-600 transition-colors duration-150">← Back to Home</button>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- STATE 3: GAME (fixed 5-question round)                        -->
+    <!-- ============================================================ -->
+    <div id="screenGame" class="hidden relative z-10 min-h-screen w-full flex flex-col items-center justify-center px-4 py-10">
+      <div class="relative z-10 w-full flex flex-col items-center gap-5">
+
+        <header class="text-center">
+          <h1 class="font-jp text-3xl sm:text-4xl font-extrabold text-rose-500">🌸 文法ポップ</h1>
+          <p class="text-stone-400 text-sm font-semibold mt-1">Particle Pop — pick the right 助詞 before the timer runs out!</p>
+          <div id="activeFilterTag" class="font-jp inline-block bg-white/70 border border-orange-100/60 text-stone-500 font-bold rounded-full px-4 py-1.5 text-xs sm:text-sm shadow-sm mt-3">📖 Practicing: All Particles</div>
+        </header>
+
+        <div class="w-full max-w-xl flex justify-between items-center">
+          <div class="flex items-center gap-3">
+            <button id="exitRoundBtn" type="button" title="Give up" aria-label="Give up and return home" class="w-9 h-9 flex items-center justify-center rounded-full bg-white/70 border border-orange-100/60 text-stone-400 font-bold shadow-sm transition-all duration-150 hover:bg-rose-50 hover:text-rose-500 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200">✕</button>
+            <div id="scoreBadge" class="font-jp bg-rose-100 border border-rose-200 text-rose-600 font-bold rounded-full px-5 py-2 shadow-sm text-sm sm:text-base">🌸 Score: 0</div>
+          </div>
+          <div id="streakBadge" class="font-jp bg-amber-100 border border-amber-200 text-amber-600 font-bold rounded-full px-5 py-2 shadow-sm text-sm sm:text-base">✨ Streak: 0</div>
+        </div>
+
+        <div id="card" class="relative w-full max-w-xl bg-white/90 backdrop-blur-md rounded-3xl border-2 border-orange-100/60 shadow-[0_10px_30px_rgba(217,119,6,0.06)] p-6 sm:p-10">
+
+          <div class="w-full h-2.5 bg-rose-50 rounded-full overflow-hidden mb-5">
+            <div id="timerBarInner" class="h-full bg-gradient-to-r from-rose-300 to-amber-300 rounded-full"></div>
+          </div>
+
+          <div id="questionCounter" class="text-center text-xs font-bold tracking-widest uppercase text-stone-400 mb-4"></div>
+
+          <p id="sentence" class="font-jp text-2xl sm:text-4xl text-center leading-relaxed mb-2"></p>
+
+          <p id="romaji" class="text-center text-stone-400 text-sm sm:text-base font-semibold italic mb-4"></p>
+
+          <div id="hintWrapper" class="flex justify-center mb-8">
+            <div id="hint" class="inline-block bg-emerald-50 border border-emerald-100 rounded-2xl px-5 py-2.5 text-emerald-600 font-semibold text-sm sm:text-base"></div>
+          </div>
+
+          <div id="options" class="grid grid-cols-2 gap-4 sm:gap-5"></div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- STATE 4: RESULTS (the breather)                               -->
+    <!-- ============================================================ -->
+    <div id="screenResults" class="hidden relative z-10 min-h-screen w-full flex flex-col items-center justify-center px-4 py-10">
+      <div class="bg-white rounded-3xl border-2 border-orange-100/60 shadow-[0_20px_50px_rgba(217,119,6,0.15)] p-8 sm:p-10 max-w-sm w-full text-center animate-pop-in">
+        <div class="text-5xl mb-3">🌸</div>
+        <h2 id="praise" class="font-jp text-2xl sm:text-3xl font-extrabold text-rose-500 mb-2"></h2>
+        <p id="finalScore" class="font-jp text-lg text-stone-600 mb-7"></p>
+        <div class="flex flex-col gap-3">
+          <button id="playNextRoundBtn" type="button" class="w-full font-jp bg-rose-200 hover:bg-rose-300 rounded-2xl border-b-4 border-rose-400 active:border-b-0 active:translate-y-1 transition-all duration-150 text-white font-bold text-lg py-4 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-300">Play Next Round 🌸</button>
+          <button id="backToHomeBtn" type="button" class="w-full font-jp bg-white/70 border-2 border-orange-100/60 rounded-2xl px-6 py-3.5 text-stone-500 font-bold transition-all duration-150 hover:bg-rose-50/40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200">Back to Home</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  const questions = [
+    { sentence: "わたし ___ たなか です。", romaji: "Watashi ___ Tanaka desu.", hint: "I am Tanaka.", answer: "は", options: ["は", "が", "に", "で"] },
+    { sentence: "とうきょう ___ いきます。", romaji: "Toukyou ___ ikimasu.", hint: "I am going to Tokyo.", answer: "に", options: ["へ", "に", "で", "を"] },
+    { sentence: "はし ___ たべます。", romaji: "Hashi ___ tabemasu.", hint: "I eat using chopsticks.", answer: "で", options: ["で", "に", "を", "と"] },
+    { sentence: "りんご ___ たべたい。", romaji: "Ringo ___ tabetai.", hint: "I want to eat an apple.", answer: "が", options: ["が", "は", "に", "へ"] },
+    { sentence: "ともだち ___ はなします。", romaji: "Tomodachi ___ hanashimasu.", hint: "I talk with a friend.", answer: "と", options: ["と", "で", "に", "を"] },
+    { sentence: "こうえん ___ あそびます。", romaji: "Kouen ___ asobimasu.", hint: "I play at the park.", answer: "で", options: ["で", "に", "を", "へ"] },
+    { sentence: "ほん ___ よみます。", romaji: "Hon ___ yomimasu.", hint: "I read a book.", answer: "を", options: ["を", "が", "に", "で"] },
+    { sentence: "せんせい ___ ききます。", romaji: "Sensei ___ kikimasu.", hint: "I ask the teacher.", answer: "に", options: ["に", "で", "と", "を"] },
+    { sentence: "どようび ___ えいが を みます。", romaji: "Doyoubi ___ eiga o mimasu.", hint: "On Saturday, I watch a movie.", answer: "に", options: ["に", "で", "を", "が"] },
+    { sentence: "わたし ___ がくせい です。", romaji: "Watashi ___ gakusei desu.", hint: "I am also a student.", answer: "も", options: ["も", "は", "が", "に"] },
+    { sentence: "じゅう じ ___ ねます。", romaji: "Juu ji ___ nemasu.", hint: "I sleep at 10 o'clock.", answer: "に", options: ["に", "で", "へ", "を"] },
+    { sentence: "でんしゃ ___ がっこう へ いきます。", romaji: "Densha ___ gakkou e ikimasu.", hint: "I go to school by train.", answer: "で", options: ["で", "に", "を", "と"] },
+    { sentence: "ねこ ___ すきです。", romaji: "Neko ___ suki desu.", hint: "I like cats.", answer: "が", options: ["が", "は", "に", "で"] },
+    { sentence: "きょう ___ あつい です。", romaji: "Kyou ___ atsui desu.", hint: "Today is hot.", answer: "は", options: ["は", "が", "に", "で"] },
+    { sentence: "あたま ___ いたいです。", romaji: "Atama ___ itai desu.", hint: "My head hurts.", answer: "が", options: ["が", "は", "に", "を"] },
+    { sentence: "コーヒー ___ のみます。", romaji: "Koohii ___ nomimasu.", hint: "I drink coffee.", answer: "を", options: ["を", "が", "に", "で"] },
+    { sentence: "かぞく ___ すんでいます。", romaji: "Kazoku ___ sunde imasu.", hint: "I live with my family.", answer: "と", options: ["と", "に", "で", "を"] },
+    { sentence: "テレビ ___ みます。", romaji: "Terebi ___ mimasu.", hint: "I watch TV.", answer: "を", options: ["を", "に", "で", "が"] },
+    { sentence: "きょうと ___ りょこう します。", romaji: "Kyouto ___ ryokou shimasu.", hint: "I will travel to Kyoto.", answer: "へ", options: ["へ", "を", "と", "が"] },
+    { sentence: "がっこう ___ うち まで あるきます。", romaji: "Gakkou ___ uchi made arukimasu.", hint: "I walk from school to home.", answer: "から", options: ["から", "まで", "に", "で"] },
+    { sentence: "よる じゅう じ ___ べんきょう します。", romaji: "Yoru juu ji ___ benkyou shimasu.", hint: "I study until 10 pm.", answer: "まで", options: ["まで", "から", "に", "を"] },
+    { sentence: "つくえ の うえ に ほん ___ ペン が あります。", romaji: "Tsukue no ue ni hon ___ pen ga arimasu.", hint: "There are things like books and pens on the desk.", answer: "や", options: ["や", "と", "も", "が"] },
+    { sentence: "せんせい ___ にほんじん です。", romaji: "Sensei ___ nihonjin desu.", hint: "The teacher is also Japanese.", answer: "も", options: ["も", "は", "が", "に"] },
+    { sentence: "わたし ___ りんご が すき です。", romaji: "Watashi ___ ringo ga suki desu.", hint: "I like apples.", answer: "は", options: ["は", "が", "に", "で"] },
+    { sentence: "うち ___ えき まで あるいて じゅっぷん です。", romaji: "Uchi ___ eki made aruite juppun desu.", hint: "It's a 10-minute walk from home to the station.", answer: "から", options: ["から", "まで", "に", "で"] },
+    { sentence: "げつようび ___ きんようび まで はたらきます。", romaji: "Getsuyoubi ___ kinyoubi made hatarakimasu.", hint: "I work from Monday to Friday.", answer: "から", options: ["から", "まで", "に", "を"] },
+    { sentence: "としょかん は ごご ろくじ ___ あいています。", romaji: "Toshokan wa gogo rokuji ___ aiteimasu.", hint: "The library is open until 6 pm.", answer: "まで", options: ["まで", "から", "に", "で"] },
+    { sentence: "これ ___ わたし の ほん です。", romaji: "Kore ___ watashi no hon desu.", hint: "This is my book.", answer: "は", options: ["は", "が", "を", "に"] },
+    { sentence: "あの ひと ___ せんせい です。", romaji: "Ano hito ___ sensei desu.", hint: "That person is a teacher.", answer: "は", options: ["は", "が", "を", "に"] },
+    { sentence: "にほん の たべもの ___ おいしい です。", romaji: "Nihon no tabemono ___ oishii desu.", hint: "Japanese food is delicious.", answer: "は", options: ["は", "が", "を", "で"] },
+    { sentence: "わたし ___ こうこうせい です。", romaji: "Watashi ___ koukousei desu.", hint: "I am a high school student.", answer: "は", options: ["は", "が", "も", "に"] },
+    { sentence: "この くるま ___ たかい です。", romaji: "Kono kuruma ___ takai desu.", hint: "This car is expensive.", answer: "は", options: ["は", "が", "を", "に"] },
+    { sentence: "たなかさん ___ いしゃ です。", romaji: "Tanaka-san ___ isha desu.", hint: "Mr. Tanaka is a doctor.", answer: "は", options: ["は", "が", "を", "に"] },
+    { sentence: "にほんご ___ すこし わかります。", romaji: "Nihongo ___ sukoshi wakarimasu.", hint: "I understand a little Japanese.", answer: "が", options: ["が", "は", "を", "に"] },
+    { sentence: "いぬ ___ こうえん に います。", romaji: "Inu ___ kouen ni imasu.", hint: "There is a dog in the park.", answer: "が", options: ["が", "は", "に", "も"] },
+    { sentence: "わたし は えいご ___ すこし できます。", romaji: "Watashi wa eigo ___ sukoshi dekimasu.", hint: "I can speak a little English.", answer: "が", options: ["が", "は", "を", "に"] },
+    { sentence: "おかね ___ ほしいです。", romaji: "Okane ___ hoshii desu.", hint: "I want money.", answer: "が", options: ["が", "は", "を", "に"] },
+    { sentence: "そら に ほし ___ たくさん みえます。", romaji: "Sora ni hoshi ___ takusan miemasu.", hint: "Many stars are visible in the sky.", answer: "が", options: ["が", "は", "を", "も"] },
+    { sentence: "きょう は じかん ___ あまり ありません。", romaji: "Kyou wa jikan ___ amari arimasen.", hint: "I don't have much time today.", answer: "が", options: ["が", "は", "を", "に"] },
+    { sentence: "まいあさ しんぶん ___ よみます。", romaji: "Maiasa shinbun ___ yomimasu.", hint: "I read the newspaper every morning.", answer: "を", options: ["を", "が", "に", "で"] },
+    { sentence: "にほんご ___ べんきょうします。", romaji: "Nihongo ___ benkyoushimasu.", hint: "I study Japanese.", answer: "を", options: ["を", "が", "に", "で"] },
+    { sentence: "まいにち メール ___ かきます。", romaji: "Mainichi meeru ___ kakimasu.", hint: "I write emails every day.", answer: "を", options: ["を", "が", "に", "で"] },
+    { sentence: "しゃしん ___ とります。", romaji: "Shashin ___ torimasu.", hint: "I take photos.", answer: "を", options: ["を", "が", "に", "で"] },
+    { sentence: "ドア ___ あけて ください。", romaji: "Doa ___ akete kudasai.", hint: "Please open the door.", answer: "を", options: ["を", "が", "に", "で"] },
+    { sentence: "くつ ___ ぬいで ください。", romaji: "Kutsu ___ nuide kudasai.", hint: "Please take off your shoes.", answer: "を", options: ["を", "が", "に", "と"] },
+    { sentence: "はこ の なか ___ ねこ が います。", romaji: "Hako no naka ___ neko ga imasu.", hint: "There is a cat inside the box.", answer: "に", options: ["に", "で", "を", "へ"] },
+    { sentence: "らいねん にほん ___ すみます。", romaji: "Rainen nihon ___ sumimasu.", hint: "Next year I will live in Japan.", answer: "に", options: ["に", "で", "を", "へ"] },
+    { sentence: "ともだち ___ でんわ を します。", romaji: "Tomodachi ___ denwa o shimasu.", hint: "I will call my friend.", answer: "に", options: ["に", "で", "と", "を"] },
+    { sentence: "テーブル の うえ ___ はな を おきます。", romaji: "Teeburu no ue ___ hana o okimasu.", hint: "I put flowers on the table.", answer: "に", options: ["に", "で", "を", "へ"] },
+    { sentence: "はは ___ てがみ を おくりました。", romaji: "Haha ___ tegami o okurimashita.", hint: "I sent a letter to my mother.", answer: "に", options: ["に", "で", "と", "へ"] },
+    { sentence: "しちじ ___ おきます。", romaji: "Shichiji ___ okimasu.", hint: "I get up at 7 o'clock.", answer: "に", options: ["に", "で", "から", "まで"] },
+    { sentence: "としょかん ___ べんきょうします。", romaji: "Toshokan ___ benkyoushimasu.", hint: "I study at the library.", answer: "で", options: ["で", "に", "を", "へ"] },
+    { sentence: "にほんご ___ はなして ください。", romaji: "Nihongo ___ hanashite kudasai.", hint: "Please speak in Japanese.", answer: "で", options: ["で", "を", "に", "と"] },
+    { sentence: "ペン ___ なまえ を かきます。", romaji: "Pen ___ namae o kakimasu.", hint: "I write my name with a pen.", answer: "で", options: ["で", "に", "を", "と"] },
+    { sentence: "レストラン ___ ばんごはん を たべます。", romaji: "Resutoran ___ bangohan o tabemasu.", hint: "I eat dinner at a restaurant.", answer: "で", options: ["で", "に", "を", "へ"] },
+    { sentence: "バス ___ かいしゃ に いきます。", romaji: "Basu ___ kaisha ni ikimasu.", hint: "I go to the office by bus.", answer: "で", options: ["で", "に", "と", "を"] },
+    { sentence: "この もんだい は ごふん ___ できます。", romaji: "Kono mondai wa gofun ___ dekimasu.", hint: "I can do this problem in five minutes.", answer: "で", options: ["で", "に", "から", "まで"] },
+    { sentence: "うみ ___ いきましょう。", romaji: "Umi ___ ikimashou.", hint: "Let's go to the sea.", answer: "へ", options: ["へ", "に", "を", "で"] },
+    { sentence: "みなみ ___ すすんで ください。", romaji: "Minami ___ susunde kudasai.", hint: "Please head south.", answer: "へ", options: ["へ", "に", "を", "で"] },
+    { sentence: "えき ___ の みち を おしえて ください。", romaji: "Eki ___ no michi o oshiete kudasai.", hint: "Please tell me the way to the station.", answer: "へ", options: ["へ", "に", "を", "で"] },
+    { sentence: "くに ___ かえります。", romaji: "Kuni ___ kaerimasu.", hint: "I will return to my home country.", answer: "へ", options: ["へ", "に", "を", "で"] },
+    { sentence: "この でんしゃ は おおさか ___ いきます。", romaji: "Kono densha wa oosaka ___ ikimasu.", hint: "This train goes to Osaka.", answer: "へ", options: ["へ", "に", "を", "で"] },
+    { sentence: "にわ ___ でて ください。", romaji: "Niwa ___ dete kudasai.", hint: "Please go out to the garden.", answer: "へ", options: ["へ", "に", "を", "で"] },
+    { sentence: "たいしかん ___ いきたい です。", romaji: "Taishikan ___ ikitai desu.", hint: "I want to go to the embassy.", answer: "へ", options: ["へ", "に", "を", "で"] },
+    { sentence: "きた ___ あるいて ください。", romaji: "Kita ___ aruite kudasai.", hint: "Please walk to the north.", answer: "へ", options: ["へ", "に", "を", "で"] },
+    { sentence: "せんせい ___ しゃしん を とりました。", romaji: "Sensei ___ shashin o torimashita.", hint: "I took a photo with the teacher.", answer: "と", options: ["と", "に", "で", "や"] },
+    { sentence: "いもうと ___ かいもの に いきます。", romaji: "Imouto ___ kaimono ni ikimasu.", hint: "I'm going shopping with my little sister.", answer: "と", options: ["と", "に", "で", "も"] },
+    { sentence: "こども ___ あそびます。", romaji: "Kodomo ___ asobimasu.", hint: "I play with the children.", answer: "と", options: ["と", "に", "で", "も"] },
+    { sentence: "パン ___ たまご を かいました。", romaji: "Pan ___ tamago o kaimashita.", hint: "I bought bread and eggs.", answer: "と", options: ["と", "や", "も", "に"] },
+    { sentence: "かのじょ ___ けっこんします。", romaji: "Kanojo ___ kekkonshimasu.", hint: "I will marry her.", answer: "と", options: ["と", "に", "で", "も"] },
+    { sentence: "りょうしん ___ そうだんしました。", romaji: "Ryoushin ___ soudanshimashita.", hint: "I consulted with my parents.", answer: "と", options: ["と", "に", "で", "も"] },
+    { sentence: "たなかさん ___ けんか しました。", romaji: "Tanaka-san ___ kenka shimashita.", hint: "I had a fight with Mr. Tanaka.", answer: "と", options: ["と", "に", "で", "も"] },
+    { sentence: "かばん の なか に ノート ___ えんぴつ が あります。", romaji: "Kaban no naka ni nooto ___ enpitsu ga arimasu.", hint: "There are things like notebooks and pencils in the bag.", answer: "や", options: ["や", "と", "も", "が"] },
+    { sentence: "れいぞうこ に ぎゅうにゅう ___ たまご が あります。", romaji: "Reizouko ni gyuunyuu ___ tamago ga arimasu.", hint: "There's milk, eggs, and so on in the fridge.", answer: "や", options: ["や", "と", "も", "が"] },
+    { sentence: "この みせ に は りんご ___ みかん が あります。", romaji: "Kono mise ni wa ringo ___ mikan ga arimasu.", hint: "This store has things like apples and oranges.", answer: "や", options: ["や", "と", "も", "が"] },
+    { sentence: "しゅうまつ は えいが ___ どくしょ を たのしみます。", romaji: "Shuumatsu wa eiga ___ dokusho o tanoshimimasu.", hint: "On weekends I enjoy things like movies and reading.", answer: "や", options: ["や", "と", "も", "に"] },
+    { sentence: "きょうしつ に つくえ ___ いす が あります。", romaji: "Kyoushitsu ni tsukue ___ isu ga arimasu.", hint: "There are things like desks and chairs in the classroom.", answer: "や", options: ["や", "と", "も", "が"] },
+    { sentence: "にわ に さくら ___ うめ の き が あります。", romaji: "Niwa ni sakura ___ ume no ki ga arimasu.", hint: "There are things like cherry and plum trees in the garden.", answer: "や", options: ["や", "と", "も", "が"] },
+    { sentence: "パーティー に くだもの ___ おかし を もってきました。", romaji: "Paatii ni kudamono ___ okashi o mottekimashita.", hint: "I brought things like fruit and snacks to the party.", answer: "や", options: ["や", "と", "も", "を"] },
+    { sentence: "ほんだな に まんが ___ ざっし が あります。", romaji: "Hondana ni manga ___ zasshi ga arimasu.", hint: "There are things like comics and magazines on the bookshelf.", answer: "や", options: ["や", "と", "も", "が"] },
+    { sentence: "あに ___ だいがくせい です。", romaji: "Ani ___ daigakusei desu.", hint: "My older brother is also a college student.", answer: "も", options: ["も", "は", "が", "に"] },
+    { sentence: "この レストラン ___ おいしい です。", romaji: "Kono resutoran ___ oishii desu.", hint: "This restaurant is also delicious.", answer: "も", options: ["も", "は", "が", "を"] },
+    { sentence: "きょう ___ あめ です。", romaji: "Kyou ___ ame desu.", hint: "Today is also rainy.", answer: "も", options: ["も", "は", "が", "に"] },
+    { sentence: "わたし ___ その えいが を みました。", romaji: "Watashi ___ sono eiga o mimashita.", hint: "I also watched that movie.", answer: "も", options: ["も", "は", "が", "を"] },
+    { sentence: "この もんだい ___ むずかしい です。", romaji: "Kono mondai ___ muzukashii desu.", hint: "This problem is also difficult.", answer: "も", options: ["も", "は", "が", "を"] },
+    { sentence: "らいしゅう ___ いそがしい です。", romaji: "Raishuu ___ isogashii desu.", hint: "Next week is also busy.", answer: "も", options: ["も", "は", "が", "に"] },
+    { sentence: "この みせ ___ ひらいて います。", romaji: "Kono mise ___ hiraite imasu.", hint: "This store is also open.", answer: "も", options: ["も", "は", "が", "を"] },
+    { sentence: "この でんしゃ は おおさか ___ きました。", romaji: "Kono densha wa oosaka ___ kimashita.", hint: "This train came from Osaka.", answer: "から", options: ["から", "まで", "に", "を"] },
+    { sentence: "じゅぎょう は くじ ___ はじまります。", romaji: "Jugyou wa kuji ___ hajimarimasu.", hint: "Class starts from 9 o'clock.", answer: "から", options: ["から", "まで", "に", "で"] },
+    { sentence: "この てがみ は はは ___ です。", romaji: "Kono tegami wa haha ___ desu.", hint: "This letter is from my mother.", answer: "から", options: ["から", "まで", "に", "と"] },
+    { sentence: "にほん ___ きました。", romaji: "Nihon ___ kimashita.", hint: "I came from Japan.", answer: "から", options: ["から", "まで", "に", "を"] },
+    { sentence: "しごと は あさ はちじ ___ です。", romaji: "Shigoto wa asa hachiji ___ desu.", hint: "Work is from 8 am.", answer: "から", options: ["から", "まで", "に", "で"] },
+    { sentence: "この バス は くうこう ___ でます。", romaji: "Kono basu wa kuukou ___ demasu.", hint: "This bus departs from the airport.", answer: "から", options: ["から", "まで", "に", "を"] },
+    { sentence: "かいぎ は さんじ ___ です。", romaji: "Kaigi wa sanji ___ desu.", hint: "The meeting is until 3 o'clock.", answer: "まで", options: ["まで", "から", "に", "で"] },
+    { sentence: "えき ___ あるいて いきます。", romaji: "Eki ___ aruite ikimasu.", hint: "I will walk to the station.", answer: "まで", options: ["まで", "から", "に", "へ"] },
+    { sentence: "なつやすみ は はちがつ ___ です。", romaji: "Natsuyasumi wa hachigatsu ___ desu.", hint: "Summer vacation is until August.", answer: "まで", options: ["まで", "から", "に", "で"] },
+    { sentence: "この きっぷ は しぶや ___ です。", romaji: "Kono kippu wa Shibuya ___ desu.", hint: "This ticket is valid to Shibuya.", answer: "まで", options: ["まで", "から", "に", "を"] },
+    { sentence: "テスト は ごじ ___ です。", romaji: "Tesuto wa goji ___ desu.", hint: "The test is until 5 o'clock.", answer: "まで", options: ["まで", "から", "に", "で"] },
+    { sentence: "この こうじ は らいげつ ___ つづきます。", romaji: "Kono kouji wa raigetsu ___ tsuzukimasu.", hint: "This construction will continue until next month.", answer: "まで", options: ["まで", "から", "に", "を"] },
+    { sentence: "びょういん は ごご よじ ___ です。", romaji: "Byouin wa gogo yoji ___ desu.", hint: "The hospital is open until 4 pm.", answer: "まで", options: ["まで", "から", "に", "で"] }
+  ];
+
+  const ROUND_LENGTH = 5;
+
+  // Maps each Custom Filters group to the particles it should pull questions for.
+  const FILTER_GROUPS = {
+    basics: ["は", "が", "を"],
+    location: ["に", "で", "へ"],
+    connection: ["と", "や", "も"],
+    range: ["から", "まで"]
+  };
+
+  // Human-readable labels for the same groups, used by the in-round "Practicing:" tag.
+  const FILTER_GROUP_LABELS = {
+    basics: "The Basics",
+    location: "Location & Tool",
+    connection: "Connection",
+    range: "Range"
+  };
+
+  const BASE_BUTTON_CLASSES =
+    "w-full bg-white/80 rounded-2xl border-b-4 border-rose-200 shadow-[0_4px_14px_rgba(217,119,6,0.06)] " +
+    "px-4 py-7 sm:py-9 text-3xl sm:text-4xl font-bold text-stone-700 font-jp transition-all duration-150 " +
+    "hover:bg-rose-50/60 hover:-translate-y-0.5 active:border-b-0 active:translate-y-1 " +
+    "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200 " +
+    "disabled:cursor-not-allowed";
+
+  // ---- persistent memory (localStorage) ----
+  const STATS_KEY = "particlePopStats";
+
+  function loadStats() {
+    try {
+      const raw = localStorage.getItem(STATS_KEY);
+      if (!raw) return { bestStreak: 0 };
+      const parsed = JSON.parse(raw);
+      return { bestStreak: typeof parsed.bestStreak === "number" ? parsed.bestStreak : 0 };
+    } catch (e) {
+      return { bestStreak: 0 };
+    }
+  }
+
+  function saveStats() {
+    try {
+      localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+    } catch (e) {
+      // localStorage unavailable (private browsing, etc.) — game still works, just won't persist
+    }
+  }
+
+  // ---- DOM refs: screens ----
+  const screens = {
+    home: document.getElementById("screenHome"),
+    filters: document.getElementById("screenFilters"),
+    game: document.getElementById("screenGame"),
+    results: document.getElementById("screenResults")
+  };
+
+  // ---- DOM refs: home ----
+  const startTrainingBtn = document.getElementById("startTrainingBtn");
+  const customFiltersBtn = document.getElementById("customFiltersBtn");
+  const bestStreakBadge = document.getElementById("bestStreakBadge");
+
+  // ---- DOM refs: filters ----
+  const groupToggleButtons = Array.prototype.slice.call(document.querySelectorAll(".group-toggle"));
+  const allParticlesToggle = document.getElementById("allParticlesToggle");
+  const modeToggleButtons = Array.prototype.slice.call(document.querySelectorAll(".mode-toggle"));
+  const lockInBtn = document.getElementById("lockInBtn");
+  const filtersBackBtn = document.getElementById("filtersBackBtn");
+
+  // ---- DOM refs: game ----
+  const scoreBadge = document.getElementById("scoreBadge");
+  const streakBadge = document.getElementById("streakBadge");
+  const activeFilterTag = document.getElementById("activeFilterTag");
+  const exitRoundBtn = document.getElementById("exitRoundBtn");
+  const card = document.getElementById("card");
+  const timerBarInner = document.getElementById("timerBarInner");
+  const questionCounter = document.getElementById("questionCounter");
+  const sentenceEl = document.getElementById("sentence");
+  const romajiEl = document.getElementById("romaji");
+  const hintWrapperEl = document.getElementById("hintWrapper");
+  const hintEl = document.getElementById("hint");
+  const optionsEl = document.getElementById("options");
+
+  // ---- DOM refs: results ----
+  const praiseEl = document.getElementById("praise");
+  const finalScoreEl = document.getElementById("finalScore");
+  const playNextRoundBtn = document.getElementById("playNextRoundBtn");
+  const backToHomeBtn = document.getElementById("backToHomeBtn");
+
+  // ---- state ----
+  let shuffledQuestions = [];
+  let currentIndex = 0;
+  let score = 0;
+  let streak = 0;
+  let acceptingAnswer = true;
+  let timerTimeout = null;
+  let transitionTimeout = null;
+  let audioCtx = null;
+  const selectedFilters = new Set(); // holds group keys: "basics" | "location" | "connection" | "range"
+  let allParticlesSelected = false;
+  let displayMode = "support"; // "support" | "hardcore"
+  let stats = loadStats();
+
+  function updateBestStreakDisplay() {
+    bestStreakBadge.textContent = "🏆 Best Streak: " + stats.bestStreak;
+  }
+
+  function maybeUpdateBestStreak() {
+    if (streak > stats.bestStreak) {
+      stats.bestStreak = streak;
+      saveStats();
+      updateBestStreakDisplay();
+    }
+  }
+
+  // ---- screen navigation ----
+  function showScreen(name) {
+    Object.keys(screens).forEach(function (key) {
+      screens[key].classList.toggle("hidden", key !== name);
+    });
+  }
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // ---- audio (unchanged) ----
+  function ensureAudio() {
+    if (!audioCtx) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      audioCtx = new Ctx();
+    }
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  }
+
+  function playTone(freq, startTime, duration, peakGain) {
+    const ctx = audioCtx;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, startTime);
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.exponentialRampToValueAtTime(peakGain, startTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.02);
+  }
+
+  function playChime() {
+    if (!ensureAudio()) return;
+    const now = audioCtx.currentTime;
+    playTone(659.25, now, 0.18, 0.25);        // E5
+    playTone(880.0, now + 0.12, 0.3, 0.25);   // A5
+  }
+
+  function playBloop() {
+    if (!ensureAudio()) return;
+    const ctx = audioCtx;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
+    const gain = ctx.createGain();
+
+    osc.type = "sine";
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(900, now);
+    filter.frequency.exponentialRampToValueAtTime(280, now + 0.25);
+
+    osc.frequency.setValueAtTime(320, now);
+    osc.frequency.exponentialRampToValueAtTime(110, now + 0.25);
+
+    gain.gain.setValueAtTime(0.28, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+
+    osc.connect(filter).connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.32);
+  }
+
+  // ---- HUD ----
+  function updateHUD() {
+    scoreBadge.textContent = "🌸 Score: " + score;
+    streakBadge.textContent = "✨ Streak: " + streak;
+  }
+
+  function shakeCardEl() {
+    card.classList.remove("animate-shake");
+    void card.offsetWidth;
+    card.classList.add("animate-shake");
+    card.addEventListener("animationend", function () {
+      card.classList.remove("animate-shake");
+    }, { once: true });
+  }
+
+  // ---- timer bar (unchanged, pure CSS transition) ----
+  const QUESTION_TIME_MS = 7000; // was 5000 — nudged slower per feedback, still snappy
+
+  function resetTimerBar() {
+    clearTimeout(timerTimeout);
+    timerBarInner.style.transition = "none";
+    timerBarInner.style.width = "100%";
+    void timerBarInner.offsetWidth;
+    timerBarInner.style.transition = "width " + (QUESTION_TIME_MS / 1000) + "s linear";
+    timerBarInner.style.width = "0%";
+    timerTimeout = setTimeout(function () {
+      if (acceptingAnswer) handleAnswer(null, null);
+    }, QUESTION_TIME_MS);
+  }
+
+  function freezeTimerBar() {
+    clearTimeout(timerTimeout);
+    const computed = getComputedStyle(timerBarInner).width;
+    timerBarInner.style.transition = "none";
+    timerBarInner.style.width = computed;
+  }
+
+  // ---- filters (State 2 logic) ----
+  function setToggleVisual(btn, selected) {
+    const box = btn.querySelector(".filter-box");
+    btn.setAttribute("aria-pressed", selected ? "true" : "false");
+    if (selected) {
+      btn.style.backgroundColor = "#fff1f2"; // rose-50
+      btn.style.borderColor = "#fda4af";     // rose-300
+      box.style.backgroundColor = "#fb7185"; // rose-400
+      box.style.borderColor = "#fb7185";
+      box.textContent = "✓";
+    } else {
+      btn.style.backgroundColor = "";
+      btn.style.borderColor = "";
+      box.style.backgroundColor = "";
+      box.style.borderColor = "";
+      box.textContent = "";
+    }
+  }
+
+  function renderFilterToggles() {
+    groupToggleButtons.forEach(function (btn) {
+      setToggleVisual(btn, !allParticlesSelected && selectedFilters.has(btn.dataset.group));
+      btn.disabled = allParticlesSelected;
+      btn.style.opacity = allParticlesSelected ? "0.45" : "";
+      btn.style.pointerEvents = allParticlesSelected ? "none" : "";
+    });
+    setToggleVisual(allParticlesToggle, allParticlesSelected);
+  }
+
+  function getFilteredPool() {
+    if (allParticlesSelected || selectedFilters.size === 0) return questions;
+    const allowedParticles = [];
+    selectedFilters.forEach(function (key) {
+      allowedParticles.push.apply(allowedParticles, FILTER_GROUPS[key]);
+    });
+    const pool = questions.filter(function (q) { return allowedParticles.indexOf(q.answer) !== -1; });
+    return pool.length ? pool : questions;
+  }
+
+  // Mirrors getFilteredPool()'s logic so the "Practicing:" tag always matches what's actually in play.
+  function getActiveFilterLabel() {
+    if (allParticlesSelected || selectedFilters.size === 0) return "All Particles";
+    const labels = [];
+    selectedFilters.forEach(function (key) { labels.push(FILTER_GROUP_LABELS[key]); });
+    return labels.join(" + ");
+  }
+
+  // ---- display mode (Full Support vs Hardcore) ----
+  function setModeVisual(btn, selected) {
+    const dot = btn.querySelector(".mode-dot");
+    btn.setAttribute("aria-pressed", selected ? "true" : "false");
+    if (selected) {
+      btn.style.backgroundColor = "#fff1f2"; // rose-50
+      btn.style.borderColor = "#fda4af";      // rose-300
+      dot.style.backgroundColor = "#fb7185";  // rose-400
+      dot.style.borderColor = "#fb7185";
+    } else {
+      btn.style.backgroundColor = "";
+      btn.style.borderColor = "";
+      dot.style.backgroundColor = "";
+      dot.style.borderColor = "";
+    }
+  }
+
+  function renderModeToggles() {
+    modeToggleButtons.forEach(function (btn) {
+      setModeVisual(btn, btn.dataset.mode === displayMode);
+    });
+  }
+
+  // ---- round building: always returns exactly ROUND_LENGTH questions ----
+  function buildRoundQuestions(pool) {
+    let result = [];
+    let guard = 0;
+    while (result.length < ROUND_LENGTH && guard < 20) {
+      result = result.concat(shuffle(pool));
+      guard++;
+    }
+    return result.slice(0, ROUND_LENGTH);
+  }
+
+  // ---- question flow (State 3) ----
+  function loadQuestion() {
+    if (currentIndex >= shuffledQuestions.length) {
+      showResultsScreen();
+      return;
+    }
+    acceptingAnswer = true;
+    const q = shuffledQuestions[currentIndex];
+
+    questionCounter.textContent = "Question " + (currentIndex + 1) + " / " + shuffledQuestions.length;
+
+    sentenceEl.innerHTML = q.sentence.replace(
+      "___",
+      '<span class="inline-block min-w-[2.75rem] border-b-4 border-dashed border-rose-300 mx-1 align-middle">&nbsp;</span>'
+    );
+    romajiEl.textContent = q.romaji;
+    hintEl.textContent = q.hint;
+
+    const isHardcore = displayMode === "hardcore";
+    romajiEl.classList.toggle("hidden", isHardcore);
+    hintWrapperEl.classList.toggle("hidden", isHardcore);
+
+    optionsEl.innerHTML = "";
+    const opts = shuffle(q.options);
+    opts.forEach(function (opt) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = opt;
+      btn.className = BASE_BUTTON_CLASSES;
+      btn.addEventListener("click", function () {
+        handleAnswer(opt, btn);
+      });
+      optionsEl.appendChild(btn);
+    });
+
+    resetTimerBar();
+  }
+
+  function handleAnswer(selected, btnEl) {
+    if (!acceptingAnswer) return;
+    acceptingAnswer = false;
+    freezeTimerBar();
+
+    const q = shuffledQuestions[currentIndex];
+    const buttons = Array.prototype.slice.call(optionsEl.children);
+    buttons.forEach(function (b) { b.disabled = true; });
+
+    if (selected === q.answer) {
+      playChime();
+      if (btnEl) {
+        btnEl.style.backgroundColor = "#d1fae5"; // emerald-100
+        btnEl.style.borderColor = "#6ee7b7";      // emerald-300
+        btnEl.style.color = "#047857";            // emerald-700
+      }
+      score += 10;
+      streak += 1;
+      updateHUD();
+      maybeUpdateBestStreak();
+      transitionTimeout = setTimeout(function () {
+        currentIndex++;
+        loadQuestion();
+      }, 850);
+    } else {
+      playBloop();
+      shakeCardEl();
+      streak = 0;
+      updateHUD();
+      if (btnEl) {
+        btnEl.style.backgroundColor = "#ffe4e6"; // rose-100
+        btnEl.style.borderColor = "#fb7185";      // rose-400
+        btnEl.style.color = "#e11d48";            // rose-600
+      }
+      const correctBtn = buttons.find(function (b) { return b.textContent === q.answer; });
+      if (correctBtn) {
+        correctBtn.style.backgroundColor = "#fff1f2"; // rose-50
+        correctBtn.style.borderColor = "#fda4af";      // rose-300
+        correctBtn.style.boxShadow = "0 0 0 3px rgba(253,164,175,0.55)";
+      }
+      transitionTimeout = setTimeout(function () {
+        currentIndex++;
+        loadQuestion();
+      }, 1200);
+    }
+  }
+
+  // ---- results (State 4) ----
+  function showResultsScreen() {
+    const total = shuffledQuestions.length;
+    const correctCount = score / 10;
+    const ratio = total ? correctCount / total : 0;
+    const pct = Math.round(ratio * 100);
+
+    let phrase;
+    if (ratio >= 0.9) phrase = "パーフェクト！かんぺき！";
+    else if (ratio >= 0.6) phrase = "よくできました！";
+    else phrase = "もういちど がんばろう！";
+
+    praiseEl.textContent = phrase;
+    finalScoreEl.textContent = "🌸 Score: " + score + "  ·  " + correctCount + "/" + total + " Correct - " + pct + "%";
+    showScreen("results");
+  }
+
+  // ---- round lifecycle ----
+  function startRound() {
+    card.classList.remove("animate-shake"); // guard against a shake interrupted mid-animation by a screen change
+    const pool = getFilteredPool();
+    shuffledQuestions = buildRoundQuestions(pool);
+    currentIndex = 0;
+    score = 0;
+    // streak is intentionally NOT reset here — it's a running count of consecutive
+    // correct answers across rounds/modes, so it can carry from one round into the
+    // next. It only breaks in handleAnswer() (wrong answer) or the Give Up handler
+    // (exitRoundBtn), both of which are unchanged.
+    updateHUD();
+    activeFilterTag.textContent = "📖 Practicing: " + getActiveFilterLabel();
+    showScreen("game");
+    loadQuestion();
+  }
+
+  // ---- wiring: home ----
+  startTrainingBtn.addEventListener("click", function () {
+    selectedFilters.clear();
+    allParticlesSelected = false;
+    renderFilterToggles();
+    startRound();
+  });
+
+  customFiltersBtn.addEventListener("click", function () {
+    renderFilterToggles();
+    renderModeToggles();
+    showScreen("filters");
+  });
+
+  // ---- wiring: filters ----
+  groupToggleButtons.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      if (allParticlesSelected) return;
+      const key = btn.dataset.group;
+      if (selectedFilters.has(key)) selectedFilters.delete(key);
+      else selectedFilters.add(key);
+      renderFilterToggles();
+    });
+  });
+
+  allParticlesToggle.addEventListener("click", function () {
+    allParticlesSelected = !allParticlesSelected;
+    if (allParticlesSelected) selectedFilters.clear();
+    renderFilterToggles();
+  });
+
+  modeToggleButtons.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      displayMode = btn.dataset.mode;
+      renderModeToggles();
+    });
+  });
+
+  lockInBtn.addEventListener("click", startRound);
+  filtersBackBtn.addEventListener("click", function () { showScreen("home"); });
+
+  // ---- wiring: results ----
+  playNextRoundBtn.addEventListener("click", startRound);
+  backToHomeBtn.addEventListener("click", function () { showScreen("home"); });
+
+  // ---- wiring: escape hatch ----
+  exitRoundBtn.addEventListener("click", function () {
+    clearTimeout(timerTimeout);
+    clearTimeout(transitionTimeout);
+    acceptingAnswer = false;
+    currentIndex = 0;
+    score = 0;
+    streak = 0;
+    shuffledQuestions = [];
+    updateHUD();
+    showScreen("home");
+  });
+
+  // ---- initial state ----
+  renderFilterToggles();
+  renderModeToggles();
+  updateBestStreakDisplay();
+  showScreen("home");
+})();
+</script>
+</body>
+</html>
